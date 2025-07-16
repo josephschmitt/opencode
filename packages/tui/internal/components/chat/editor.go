@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/v2/spinner"
 	tea "github.com/charmbracelet/bubbletea/v2"
@@ -23,6 +24,7 @@ import (
 	"github.com/sst/opencode/internal/styles"
 	"github.com/sst/opencode/internal/theme"
 	"github.com/sst/opencode/internal/util"
+	"github.com/sst/opencode/packages/tui/internal/history"
 )
 
 type EditorComponent interface {
@@ -42,6 +44,7 @@ type EditorComponent interface {
 	SetValue(value string)
 	SetInterruptKeyInDebounce(inDebounce bool)
 	SetExitKeyInDebounce(inDebounce bool)
+	SetHistory(history []history.HistoryEntry)
 }
 
 type editorComponent struct {
@@ -357,16 +360,25 @@ func (m *editorComponent) Submit() (tea.Model, tea.Cmd) {
 		})
 	}
 
+	// Create a new history entry
+	historyEntry := history.HistoryEntry{
+		Prompt:      value,
+		Attachments: make([]history.Attachment, 0),
+		Timestamp:   time.Now(),
+	}
+	
+	// TODO: Parse attachments from the prompt text (stretch goal)
+	// For now, we'll just store the prompt text
+
 	// Add the prompt to history before clearing
-	m.app.PromptHistory = append(m.app.PromptHistory, value)
-	m.app.PromptHistoryIndex = len(m.app.PromptHistory)
+	m.app.HistoryStore.Add(historyEntry)
 
 	updated, cmd := m.Clear()
 	m = updated.(*editorComponent)
 	cmds = append(cmds, cmd)
 	
 	// Update textarea history to match app history
-	m.textarea.SetHistory(m.app.PromptHistory)
+	m.textarea.SetHistory(m.app.HistoryStore.Entries())
 
 	cmds = append(cmds, util.CmdHandler(app.SendMsg{Text: value, Attachments: fileParts}))
 	return m, tea.Batch(cmds...)
@@ -420,6 +432,10 @@ func (m *editorComponent) SetValue(value string) {
 
 func (m *editorComponent) SetExitKeyInDebounce(inDebounce bool) {
 	m.exitKeyInDebounce = inDebounce
+}
+
+func (m *editorComponent) SetHistory(history []history.HistoryEntry) {
+	m.textarea.SetHistory(history)
 }
 
 func (m *editorComponent) getInterruptKeyText() string {
@@ -488,7 +504,7 @@ func NewEditorComponent(app *app.App) EditorComponent {
 	ta.ShowLineNumbers = false
 	ta.CharLimit = -1
 	ta = updateTextareaStyles(ta)
-	ta.SetHistory(app.PromptHistory)
+	ta.SetHistory(app.HistoryStore.Entries())
 
 	m := &editorComponent{
 		app:                    app,
