@@ -197,7 +197,23 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Escape: Close inputs/modals (existing)
    - Platform-aware modifier key detection
 
-### Phase 4: Polish & Security (Week 7-8)
+### Phase 4: Theme System (Week 7)
+
+1. Port TUI theme system to web UI
+   - Support all 24 built-in themes (aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn)
+   - Create theme JSON parser for web
+   - Map theme colors to CSS custom properties
+   - Implement theme selection UI (dropdown in settings)
+   - Support system theme detection
+   - Persist theme selection to localStorage
+2. Theme integration
+   - Apply theme colors to all UI components
+   - Update Shiki syntax highlighting to use theme colors
+   - Style markdown rendering with theme colors
+   - Apply theme to diff viewer
+   - Ensure all status colors use theme values
+
+### Phase 5: Polish & Security (Week 8)
 
 1. Add authentication layer
 2. Implement security best practices
@@ -205,7 +221,7 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
 4. Responsive design
 5. Performance optimization
 
-### Phase 5: Deployment (Week 9-10)
+### Phase 6: Deployment (Week 9-10)
 
 1. Production build optimization
 2. Docker containerization
@@ -360,7 +376,14 @@ Legend:
      - Agent/model selection
      - File attachments via @ mentions
 
-2. **Phase 4: Polish & Security**
+2. **Phase 4: Theme System**
+   - Port TUI theme system to web UI
+   - Support all 24 built-in themes from `packages/tui/internal/theme/themes/`
+   - Create theme selection UI
+   - Apply theme colors throughout the application
+   - Integrate with syntax highlighting and markdown rendering
+
+3. **Phase 5: Polish & Security**
    - Add authentication layer (optional for self-hosted)
    - Implement security best practices
    - Error handling and loading states
@@ -368,7 +391,7 @@ Legend:
    - Performance optimization
    - Accessibility improvements
 
-3. **Phase 5: Deployment**
+4. **Phase 6: Deployment**
    - Production build optimization
    - Docker containerization
    - Deployment documentation
