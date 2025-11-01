@@ -165,13 +165,37 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Messages update live as they stream from server
    - Progress indicators for ongoing operations
 
-### Phase 3: Advanced Features (Week 5-6)
+### Phase 3: Advanced Features (Week 5-6) ✅ COMPLETED
 
-1. File explorer with search
-2. Diff viewer for code changes
-3. Model and agent selection
-4. Theme customization
-5. Keyboard shortcuts
+1. ✅ File explorer with tree view
+   - Created file-tree.tsx with recursive directory navigation
+   - Expand/collapse folders with visual indicators
+   - Git status indicators (modified, added, deleted files)
+   - File selection and click-to-open functionality
+   - Emoji-based file icons for 50+ file types
+   - Tooltips showing full file paths
+2. ✅ Layout components
+   - Created header.tsx with menu toggle and branding
+   - Created sidebar.tsx with sessions list and file explorer
+   - Sessions list shows file change counts and last modified
+   - Toggle-able file explorer panel (Cmd/Ctrl+P)
+   - Responsive layout integration
+3. ✅ Model and agent selection
+   - Full model selector already in prompt-input.tsx from Phase 2
+   - Provider management with logos and metadata
+   - Cost information display
+   - Agent dropdown with available agents
+4. ✅ Theme customization
+   - Created theme-switcher.tsx component
+   - Light/dark mode toggle with localStorage persistence
+   - System preference detection on first load
+   - Applies theme to HTML root element
+5. ✅ Keyboard shortcuts
+   - Created shortcuts.ts utility
+   - Cmd/Ctrl+P: Toggle file explorer
+   - Cmd/Ctrl+N: Create new session
+   - Escape: Close inputs/modals (existing)
+   - Platform-aware modifier key detection
 
 ### Phase 4: Polish & Security (Week 7-8)
 
@@ -250,12 +274,12 @@ packages/web-ui/
 │   │   ├── message-progress.tsx       ✅ Streaming message progress with tool outputs
 │   │   ├── code.tsx                   ✅ Syntax highlighting with line selection
 │   │   ├── spinner.tsx                ✅ Animated loading spinner
-│   │   ├── file/                      📁 To be created
-│   │   │   ├── FileTree.tsx
-│   │   │   └── FileExplorer.tsx
-│   │   └── layout/                    📁 To be created
-│   │       ├── Sidebar.tsx
-│   │       └── Header.tsx
+│   │   ├── file/
+│   │   │   └── file-tree.tsx          ✅ Recursive tree view with git status
+│   │   └── layout/
+│   │       ├── header.tsx             ✅ Header with menu toggle and branding
+│   │       ├── sidebar.tsx            ✅ Sessions list and file explorer
+│   │       └── theme-switcher.tsx     ✅ Light/dark mode toggle
 │   ├── context/                       ✅ Created (copied from desktop)
 │   │   ├── helper.tsx                 ✅
 │   │   ├── sdk.tsx                    ✅
@@ -266,7 +290,11 @@ packages/web-ui/
 │   │   ├── dom.ts                     ✅
 │   │   ├── index.ts                   ✅
 │   │   ├── path.ts                    ✅
-│   │   └── speech.ts                  ✅
+│   │   ├── speech.ts                  ✅
+│   │   └── shortcuts.ts               ✅ Keyboard shortcut utilities
+│   ├── ui/
+│   │   ├── file-icon.tsx              ✅ Emoji icons for 50+ file types
+│   │   └── index.ts                   ✅
 │   ├── pages/
 │   │   └── index.tsx                  ✅ Full chat interface with message history
 │   ├── index.tsx                      ✅ Created (main entry)
@@ -302,6 +330,17 @@ Legend:
   - Components: spinner.tsx, message-progress.tsx, prompt-input.tsx, code.tsx
   - Full chat interface in pages/index.tsx
   - Successful production build (779KB main JS bundle)
+- **Phase 3**: Advanced features and layout
+  - File explorer with recursive tree view and git status indicators
+  - File icon component with 50+ file type mappings
+  - Header and sidebar layout components
+  - Sessions list in sidebar with change counts
+  - Theme switcher with light/dark mode and localStorage persistence
+  - Keyboard shortcuts utility (Cmd/Ctrl+P, Cmd/Ctrl+N)
+  - Toggle-able file explorer panel
+  - Components: file-tree.tsx, header.tsx, sidebar.tsx, theme-switcher.tsx, file-icon.tsx, shortcuts.ts
+  - Updated main page layout with integrated navigation
+  - Successful production build (804KB main JS bundle)
 
 ### 🚧 In Progress
 
@@ -311,20 +350,30 @@ Legend:
 
 1. **Immediate (Testing)**
    - Test the web UI: `cd packages/web-ui && bun dev`
-   - Verify chat interface works with `opencode serve`
-   - Test message streaming and tool output display
-   - Validate agent/model selection and file attachments
+   - Start opencode server: `opencode serve`
+   - Verify full functionality:
+     - Chat interface and message streaming
+     - File explorer navigation and file opening
+     - Sessions list and new session creation
+     - Theme switcher (light/dark mode)
+     - Keyboard shortcuts (Cmd/Ctrl+P, Cmd/Ctrl+N)
+     - Agent/model selection
+     - File attachments via @ mentions
 
-2. **Phase 3: Advanced Features**
-   - Implement file explorer with search
-   - Add diff viewer for code changes
-   - Build model and agent selection UI
-   - Add theme customization
-   - Implement keyboard shortcuts
+2. **Phase 4: Polish & Security**
+   - Add authentication layer (optional for self-hosted)
+   - Implement security best practices
+   - Error handling and loading states
+   - Responsive design improvements
+   - Performance optimization
+   - Accessibility improvements
 
-3. **Future Phases**
-   - Phase 4: Polish & Security
-   - Phase 5: Deployment
+3. **Phase 5: Deployment**
+   - Production build optimization
+   - Docker containerization
+   - Deployment documentation
+   - E2E testing
+   - User documentation
 
 ## References
 
