@@ -209,7 +209,7 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Escape: Close inputs/modals (existing)
    - Platform-aware modifier key detection
 
-### Phase 4: Theme System (Week 7) ✅ COMPLETED
+### Phase 4: Theme System (Week 7) ⚠️ PARTIALLY COMPLETE
 
 1. ✅ Port TUI theme system to web UI
    - Copied all 24 built-in themes from TUI (aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn)
@@ -218,12 +218,154 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Implemented theme selection UI as dropdown in header
    - System theme detection with MediaQuery listener
    - localStorage persistence for theme preference
-2. ✅ Theme integration
-   - Applied theme colors via CSS custom properties throughout UI
-   - All components use theme CSS variables
-   - Theme switcher shows color swatches and current selection
-   - Instant theme switching without page reload
-   - Support for light/dark mode per theme
+2. ❌ Theme integration (NOT WORKING)
+   - **Problem**: Theme colors are not applying to UI components
+   - **Root Cause**: `@opencode-ai/ui` package uses its own design system with ~510 CSS variables (e.g., `--background-base`, `--text-strong`, `--border-weak-base`, etc.) that are completely different from our theme system variables (e.g., `--color-background`, `--color-text`)
+   - **Current State**: Theme selection works (localStorage, mode detection, dropdown), but colors don't change
+   - **Fix Required**: Map TUI theme colors to UI package's CSS variable naming convention
+
+### Phase 4.5: Theme Integration Fix (Week 7.5)
+
+**Critical Issue**: Theme system infrastructure is complete but colors don't apply because of CSS variable mismatch between TUI themes and UI package design system.
+
+#### Problem Analysis
+
+**TUI Theme Structure** (from `packages/tui/internal/theme/`):
+
+- Defines ~78 semantic color properties
+- Uses adaptive colors (light/dark variants)
+- Categories: background (3), border (3), brand (3), text (2), status (4), diff (12), markdown (14), syntax (9)
+- Variables we created: `--color-background`, `--color-text`, `--color-primary`, etc.
+
+**UI Package Design System** (from `packages/ui/src/styles/theme.css`):
+
+- Defines ~510 CSS variables
+- Uses Radix-style naming convention
+- Variables: `--background-base`, `--text-strong`, `--border-weak-base`, `--surface-raised-strong`, etc.
+- Based on primitive color scales (smoke, cobalt, ember, apple, etc.)
+- Each primitive has light/dark variants and alpha variants
+
+#### Solution: Two-Layer Mapping System
+
+**Option A: Direct Mapping (Simpler, Less Flexible)**
+
+Map TUI theme colors directly to UI package variables:
+
+1. Create mapping from TUI semantic colors → UI design tokens
+2. Update `css-properties.ts` to apply theme colors to UI variables
+3. Handle light/dark mode by applying appropriate variant
+
+**Challenges**:
+
+- UI package has many more variables than TUI themes (510 vs 78)
+- UI package has granular states (hover, active, focus, disabled) that TUI doesn't
+- May not achieve full design fidelity
+
+**Option B: Color Scale Generation (Complex, More Accurate)**
+
+Generate Radix-style color scales from TUI theme base colors:
+
+1. Extract base colors from each TUI theme
+2. Generate 12-step color scales (Radix pattern) for each base
+3. Map generated scales to UI package primitives
+4. Apply to UI design tokens
+
+**Challenges**:
+
+- Requires color scale generation algorithm
+- More complex implementation
+- May drift from original theme intent
+
+**Recommendation: Option A with Intelligent Fallbacks**
+
+#### Implementation Plan
+
+**Step 1: Analyze UI Package Variables** (Research)
+
+- Categorize all 510 UI variables by purpose
+- Identify critical variables that affect main UI (background, text, borders)
+- Identify less critical variables (specific component states)
+- Document which variables can share values
+
+**Step 2: Create Mapping Schema** (Design)
+
+- Map TUI theme categories to UI variable categories:
+  - `background` → `--background-*`, `--surface-*`
+  - `border` → `--border-*`
+  - `text` → `--text-*`, `--icon-*`
+  - `brand/primary` → `--surface-brand-*`, `--border-interactive-*`
+  - `status colors` → `--surface-success-*`, `--surface-critical-*`, etc.
+  - `diff` → `--surface-diff-*`, `--text-diff-*`
+
+**Step 3: Implement Intelligent Mapping** (Code)
+
+Create `src/theme/ui-mapping.ts`:
+
+```typescript
+export function mapThemeToUIVariables(
+  theme: Theme,
+  mode: "light" | "dark",
+): Record<string, string> {
+  const colors = mode === "dark" ? theme.dark : theme.light
+
+  return {
+    // Backgrounds
+    "--background-base": colors.background,
+    "--background-weak": colors.backgroundPanel,
+    "--background-strong": colors.backgroundElement,
+    // ... map all ~510 variables
+
+    // For unmapped variables, use intelligent fallbacks:
+    // - Hover states: slightly lighter/darker than base
+    // - Active states: more contrast
+    // - Disabled states: more muted
+  }
+}
+```
+
+**Step 4: Generate Intermediate Shades** (Enhancement)
+
+For variables that need shades between our defined colors:
+
+- Implement color interpolation utilities
+- Generate hover/active/focus variants
+- Use alpha blending for subtle states
+
+**Step 5: Update Theme Application** (Integration)
+
+Update `src/theme/css-properties.ts`:
+
+- Remove current hardcoded variable mapping
+- Call `mapThemeToUIVariables()` instead
+- Apply all UI package variables
+- Ensure proper light/dark mode handling
+
+**Step 6: Testing** (Validation)
+
+Test each of 24 themes for:
+
+- Overall appearance matches theme intent
+- Light/dark modes work correctly
+- Interactive states (hover, focus, active) look good
+- Diff viewer colors are readable
+- Code syntax highlighting uses theme colors
+- No visual regressions
+
+#### Deliverables
+
+1. `src/theme/ui-mapping.ts` - Mapping logic
+2. `src/theme/color-utils.ts` - Color interpolation utilities
+3. Updated `src/theme/css-properties.ts` - Apply mapped variables
+4. Documentation of mapping decisions
+5. Visual regression tests (optional)
+
+#### Success Criteria
+
+- All 24 themes visually apply when selected
+- Light/dark mode toggle works per theme
+- UI maintains good contrast and accessibility
+- No hardcoded colors remain in components
+- Theme changes feel cohesive and intentional
 
 ### Phase 5: Remote Access & Server Discovery (Week 8)
 
@@ -469,16 +611,21 @@ Legend:
   - Components: file-tree.tsx, header.tsx, sidebar.tsx, theme-switcher.tsx, file-icon.tsx, shortcuts.ts
   - Updated main page layout with integrated navigation
   - Successful production build (804KB main JS bundle)
-- **Phase 4**: Theme system
-  - Comprehensive theme system with all 24 TUI themes
-  - Theme JSON parser with recursive color reference resolution
-  - Theme manager with localStorage persistence and system theme detection
-  - CSS custom properties system (59 theme variables)
-  - Theme context provider for app-wide theme state
-  - Updated theme switcher dropdown with color swatches
-  - Themes: aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn
-  - Components: theme/ directory with types.ts, parser.ts, manager.ts, css-properties.ts, 24 theme JSON files
-  - Successful production build (813KB main JS bundle)
+- **Phase 4**: Theme system (PARTIALLY COMPLETE - visual application broken)
+  - ✅ Theme infrastructure with all 24 TUI themes
+  - ✅ Theme JSON parser with recursive color reference resolution
+  - ✅ Theme manager with localStorage persistence and system theme detection
+  - ✅ Theme context provider for app-wide theme state
+  - ✅ Theme switcher dropdown with color swatches
+  - ❌ **Theme colors NOT applying to UI** - CSS variable mismatch
+  - Issue: TUI themes use different CSS variables than @opencode-ai/ui package
+  - Fix: Phase 4.5 will map theme colors to UI package's 510 design tokens
+- **Phase 4.5**: Theme integration fix (IN PROGRESS)
+  - Map TUI theme colors to UI package CSS variables
+  - Create intelligent mapping for 510 UI design tokens from 78 theme colors
+  - Implement color interpolation for intermediate shades
+  - Test all 24 themes for visual correctness
+  - Ensure light/dark mode works properly
 
 ### 🚧 In Progress
 
@@ -486,19 +633,13 @@ Legend:
 
 ### 📋 Next Steps
 
-1. **Immediate (Testing)**
-   - Test the web UI: `cd packages/web-ui && bun dev`
-   - Start opencode server: `opencode serve`
-   - Verify full functionality:
-     - Chat interface and message streaming
-     - File explorer navigation and file opening
-     - Sessions list and new session creation
-     - Theme switcher with all 24 themes
-     - System theme detection
-     - Theme persistence across reloads
-     - Keyboard shortcuts (Cmd/Ctrl+P, Cmd/Ctrl+N)
-     - Agent/model selection
-     - File attachments via @ mentions
+1. **Immediate (Phase 4.5 - Fix Theme Integration)**
+   - ⚠️ **Known Issue**: Theme selection works but colors don't apply visually
+   - Create mapping between TUI theme colors and UI package design tokens
+   - Map 78 theme colors to 510 UI CSS variables
+   - Implement color interpolation for missing shades
+   - Test all 24 themes visually
+   - See Phase 4.5 section for detailed plan
 
 2. **Phase 5: Remote Access & Server Discovery**
    - Server connection configuration UI
