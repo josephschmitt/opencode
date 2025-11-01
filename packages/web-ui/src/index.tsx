@@ -6,6 +6,7 @@ import { Fonts, ShikiProvider, MarkedProvider } from "@opencode-ai/ui"
 import { SDKProvider } from "./context/sdk"
 import { SyncProvider } from "./context/sync"
 import { LocalProvider } from "./context/local"
+import { ThemeProvider } from "./context/theme"
 import Home from "@/pages"
 
 const host = import.meta.env.VITE_OPENCODE_SERVER_HOST ?? "127.0.0.1"
@@ -22,22 +23,24 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 
 render(
   () => (
-    <ShikiProvider>
-      <MarkedProvider>
-        <SDKProvider url={url}>
-          <SyncProvider>
-            <LocalProvider>
-              <MetaProvider>
-                <Fonts />
-                <Router>
-                  <Route path="/" component={Home} />
-                </Router>
-              </MetaProvider>
-            </LocalProvider>
-          </SyncProvider>
-        </SDKProvider>
-      </MarkedProvider>
-    </ShikiProvider>
+    <ThemeProvider>
+      <ShikiProvider>
+        <MarkedProvider>
+          <SDKProvider url={url}>
+            <SyncProvider>
+              <LocalProvider>
+                <MetaProvider>
+                  <Fonts />
+                  <Router>
+                    <Route path="/" component={Home} />
+                  </Router>
+                </MetaProvider>
+              </LocalProvider>
+            </SyncProvider>
+          </SDKProvider>
+        </MarkedProvider>
+      </ShikiProvider>
+    </ThemeProvider>
   ),
   root!,
 )

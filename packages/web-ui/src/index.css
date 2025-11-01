@@ -1,1 +1,69 @@
 @import "@opencode-ai/ui/styles/tailwind";
+
+:root {
+  /* Background colors */
+  --color-background: #ffffff;
+  --color-background-panel: #f5f5f5;
+  --color-background-element: #ebebeb;
+
+  /* Border colors */
+  --color-border-subtle: #d4d4d4;
+  --color-border: #b8b8b8;
+  --color-border-active: #a0a0a0;
+
+  /* Brand colors */
+  --color-primary: #3b7dd8;
+  --color-secondary: #7b5bb6;
+  --color-accent: #d68c27;
+
+  /* Text colors */
+  --color-text-muted: #8a8a8a;
+  --color-text: #1a1a1a;
+
+  /* Status colors */
+  --color-error: #d1383d;
+  --color-warning: #d68c27;
+  --color-success: #3d9a57;
+  --color-info: #318795;
+
+  /* Diff colors */
+  --color-diff-added: #1e725c;
+  --color-diff-removed: #c53b53;
+  --color-diff-context: #7086b5;
+  --color-diff-hunk-header: #7086b5;
+  --color-diff-highlight-added: #4db380;
+  --color-diff-highlight-removed: #f52a65;
+  --color-diff-added-bg: #d5e5d5;
+  --color-diff-removed-bg: #f7d8db;
+  --color-diff-context-bg: #f5f5f5;
+  --color-diff-line-number: #f5f5f5;
+  --color-diff-added-line-number-bg: #c5d5c5;
+  --color-diff-removed-line-number-bg: #e7c8cb;
+
+  /* Markdown colors */
+  --color-markdown-text: #1a1a1a;
+  --color-markdown-heading: #d68c27;
+  --color-markdown-link: #3b7dd8;
+  --color-markdown-link-text: #318795;
+  --color-markdown-code: #3d9a57;
+  --color-markdown-block-quote: #b0851f;
+  --color-markdown-emph: #b0851f;
+  --color-markdown-strong: #d68c27;
+  --color-markdown-horizontal-rule: #8a8a8a;
+  --color-markdown-list-item: #3b7dd8;
+  --color-markdown-list-enumeration: #318795;
+  --color-markdown-image: #3b7dd8;
+  --color-markdown-image-text: #318795;
+  --color-markdown-code-block: #1a1a1a;
+
+  /* Syntax colors */
+  --color-syntax-comment: #8a8a8a;
+  --color-syntax-keyword: #d68c27;
+  --color-syntax-function: #3b7dd8;
+  --color-syntax-variable: #d1383d;
+  --color-syntax-string: #3d9a57;
+  --color-syntax-number: #d68c27;
+  --color-syntax-type: #b0851f;
+  --color-syntax-operator: #318795;
+  --color-syntax-punctuation: #1a1a1a;
+}

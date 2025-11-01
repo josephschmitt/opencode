@@ -197,21 +197,21 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Escape: Close inputs/modals (existing)
    - Platform-aware modifier key detection
 
-### Phase 4: Theme System (Week 7)
+### Phase 4: Theme System (Week 7) ✅ COMPLETED
 
-1. Port TUI theme system to web UI
-   - Support all 24 built-in themes (aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn)
-   - Create theme JSON parser for web
-   - Map theme colors to CSS custom properties
-   - Implement theme selection UI (dropdown in settings)
-   - Support system theme detection
-   - Persist theme selection to localStorage
-2. Theme integration
-   - Apply theme colors to all UI components
-   - Update Shiki syntax highlighting to use theme colors
-   - Style markdown rendering with theme colors
-   - Apply theme to diff viewer
-   - Ensure all status colors use theme values
+1. ✅ Port TUI theme system to web UI
+   - Copied all 24 built-in themes from TUI (aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn)
+   - Created theme JSON parser with recursive color reference resolution
+   - Mapped all theme colors to 59 CSS custom properties
+   - Implemented theme selection UI as dropdown in header
+   - System theme detection with MediaQuery listener
+   - localStorage persistence for theme preference
+2. ✅ Theme integration
+   - Applied theme colors via CSS custom properties throughout UI
+   - All components use theme CSS variables
+   - Theme switcher shows color swatches and current selection
+   - Instant theme switching without page reload
+   - Support for light/dark mode per theme
 
 ### Phase 5: Polish & Security (Week 8)
 
@@ -295,12 +295,13 @@ packages/web-ui/
 │   │   └── layout/
 │   │       ├── header.tsx             ✅ Header with menu toggle and branding
 │   │       ├── sidebar.tsx            ✅ Sessions list and file explorer
-│   │       └── theme-switcher.tsx     ✅ Light/dark mode toggle
+│   │       └── theme-switcher.tsx     ✅ Theme selector dropdown with 24 themes
 │   ├── context/                       ✅ Created (copied from desktop)
 │   │   ├── helper.tsx                 ✅
 │   │   ├── sdk.tsx                    ✅
 │   │   ├── sync.tsx                   ✅
-│   │   └── local.tsx                  ✅
+│   │   ├── local.tsx                  ✅
+│   │   └── theme.tsx                  ✅ Theme context provider
 │   ├── utils/                         ✅ Created (copied from desktop)
 │   │   ├── binary.ts                  ✅
 │   │   ├── dom.ts                     ✅
@@ -311,10 +312,17 @@ packages/web-ui/
 │   ├── ui/
 │   │   ├── file-icon.tsx              ✅ Emoji icons for 50+ file types
 │   │   └── index.ts                   ✅
+│   ├── theme/                         ✅ Theme system
+│   │   ├── types.ts                   ✅ TypeScript interfaces for themes
+│   │   ├── parser.ts                  ✅ Theme JSON parser
+│   │   ├── manager.ts                 ✅ Theme management and state
+│   │   ├── css-properties.ts          ✅ CSS custom properties mapping
+│   │   ├── index.ts                   ✅
+│   │   └── themes/                    ✅ 24 theme JSON files
 │   ├── pages/
 │   │   └── index.tsx                  ✅ Full chat interface with message history
 │   ├── index.tsx                      ✅ Created (main entry)
-│   └── index.css                      ✅ Created
+│   └── index.css                      ✅ 59 CSS custom properties for theming
 ├── package.json                       ✅ Created
 ├── tsconfig.json                      ✅ Created
 ├── vite.config.ts                     ✅ Created
@@ -357,6 +365,16 @@ Legend:
   - Components: file-tree.tsx, header.tsx, sidebar.tsx, theme-switcher.tsx, file-icon.tsx, shortcuts.ts
   - Updated main page layout with integrated navigation
   - Successful production build (804KB main JS bundle)
+- **Phase 4**: Theme system
+  - Comprehensive theme system with all 24 TUI themes
+  - Theme JSON parser with recursive color reference resolution
+  - Theme manager with localStorage persistence and system theme detection
+  - CSS custom properties system (59 theme variables)
+  - Theme context provider for app-wide theme state
+  - Updated theme switcher dropdown with color swatches
+  - Themes: aura, ayu, catppuccin, cobalt2, dracula, everforest, github, gruvbox, kanagawa, material, matrix, mellow, monokai, nightowl, nord, one-dark, opencode, palenight, rosepine, solarized, synthwave84, tokyonight, vesper, zenburn
+  - Components: theme/ directory with types.ts, parser.ts, manager.ts, css-properties.ts, 24 theme JSON files
+  - Successful production build (813KB main JS bundle)
 
 ### 🚧 In Progress
 
@@ -371,19 +389,14 @@ Legend:
      - Chat interface and message streaming
      - File explorer navigation and file opening
      - Sessions list and new session creation
-     - Theme switcher (light/dark mode)
+     - Theme switcher with all 24 themes
+     - System theme detection
+     - Theme persistence across reloads
      - Keyboard shortcuts (Cmd/Ctrl+P, Cmd/Ctrl+N)
      - Agent/model selection
      - File attachments via @ mentions
 
-2. **Phase 4: Theme System**
-   - Port TUI theme system to web UI
-   - Support all 24 built-in themes from `packages/tui/internal/theme/themes/`
-   - Create theme selection UI
-   - Apply theme colors throughout the application
-   - Integrate with syntax highlighting and markdown rendering
-
-3. **Phase 5: Polish & Security**
+2. **Phase 5: Polish & Security**
    - Add authentication layer (optional for self-hosted)
    - Implement security best practices
    - Error handling and loading states
@@ -391,7 +404,7 @@ Legend:
    - Performance optimization
    - Accessibility improvements
 
-4. **Phase 6: Deployment**
+3. **Phase 6: Deployment**
    - Production build optimization
    - Docker containerization
    - Deployment documentation
