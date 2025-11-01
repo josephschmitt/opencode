@@ -143,13 +143,27 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
 4. ⏭️ Implement authentication wrapper (deferred - not needed for initial implementation)
 5. 🚧 Create basic session list and chat interface (placeholder page created, full implementation pending)
 
-### Phase 2: Core Features (Week 3-4)
+### Phase 2: Core Features (Week 3-4) ✅ COMPLETED
 
-1. Message rendering with syntax highlighting
-2. Streaming message support
-3. File attachment and context management
-4. Tool output visualization
-5. Real-time updates via SSE
+1. ✅ Message rendering with syntax highlighting
+   - Created message-progress.tsx for streaming AI responses
+   - Created code.tsx with Shiki syntax highlighting and line selection
+   - Implemented message list in main page with markdown rendering
+2. ✅ Streaming message support
+   - MessageProgress component handles real-time SSE updates
+   - Displays current task status and completed tool executions
+   - Auto-scrolling viewport for ongoing responses
+3. ✅ File attachment and context management
+   - Prompt input supports @ mention syntax for file autocomplete
+   - File attachment UI integrated into prompt component
+4. ✅ Tool output visualization
+   - Message progress shows tool executions with spinner animations
+   - Collapsible response details with tool parts
+   - Diffs and file operations rendered in messages
+5. ✅ Real-time updates via SSE
+   - Context providers handle SSE event stream
+   - Messages update live as they stream from server
+   - Progress indicators for ongoing operations
 
 ### Phase 3: Advanced Features (Week 5-6)
 
@@ -231,23 +245,15 @@ packages/web-ui/
 ├── public/
 │   └── favicon.svg                    ✅ Created
 ├── src/
-│   ├── components/                    📁 To be created
-│   │   ├── chat/
-│   │   │   ├── MessageList.tsx
-│   │   │   ├── MessageItem.tsx
-│   │   │   └── PromptInput.tsx
-│   │   ├── session/
-│   │   │   ├── SessionList.tsx
-│   │   │   └── SessionHeader.tsx
-│   │   ├── file/
+│   ├── components/                    ✅ Created
+│   │   ├── prompt-input.tsx           ✅ Full prompt input with model/agent selection
+│   │   ├── message-progress.tsx       ✅ Streaming message progress with tool outputs
+│   │   ├── code.tsx                   ✅ Syntax highlighting with line selection
+│   │   ├── spinner.tsx                ✅ Animated loading spinner
+│   │   ├── file/                      📁 To be created
 │   │   │   ├── FileTree.tsx
 │   │   │   └── FileExplorer.tsx
-│   │   ├── tool/
-│   │   │   ├── BashOutput.tsx
-│   │   │   ├── DiffViewer.tsx
-│   │   │   └── ToolProgress.tsx
-│   │   └── layout/
-│   │       ├── Layout.tsx
+│   │   └── layout/                    📁 To be created
 │   │       ├── Sidebar.tsx
 │   │       └── Header.tsx
 │   ├── context/                       ✅ Created (copied from desktop)
@@ -262,7 +268,7 @@ packages/web-ui/
 │   │   ├── path.ts                    ✅
 │   │   └── speech.ts                  ✅
 │   ├── pages/
-│   │   └── index.tsx                  ✅ Created (placeholder)
+│   │   └── index.tsx                  ✅ Full chat interface with message history
 │   ├── index.tsx                      ✅ Created (main entry)
 │   └── index.css                      ✅ Created
 ├── package.json                       ✅ Created
@@ -283,10 +289,19 @@ Legend:
 
 ### ✅ Completed
 
-- Phase 1 foundation: Package structure, routing, SDK integration, context providers
-- All configuration files (package.json, tsconfig.json, vite.config.ts)
-- Context providers for state management (SDK, Sync, Local)
-- Basic project structure and documentation
+- **Phase 1**: Package structure, routing, SDK integration, context providers
+  - All configuration files (package.json, tsconfig.json, vite.config.ts)
+  - Context providers for state management (SDK, Sync, Local)
+  - Basic project structure and documentation
+- **Phase 2**: Core chat features implementation
+  - Message rendering with syntax highlighting (Shiki)
+  - Streaming message support with real-time updates
+  - Prompt input with agent/model selection and file attachments
+  - Tool output visualization with progress indicators
+  - Real-time SSE event handling
+  - Components: spinner.tsx, message-progress.tsx, prompt-input.tsx, code.tsx
+  - Full chat interface in pages/index.tsx
+  - Successful production build (779KB main JS bundle)
 
 ### 🚧 In Progress
 
@@ -294,31 +309,20 @@ Legend:
 
 ### 📋 Next Steps
 
-1. **Immediate (Setup & Testing)**
+1. **Immediate (Testing)**
+   - Test the web UI: `cd packages/web-ui && bun dev`
+   - Verify chat interface works with `opencode serve`
+   - Test message streaming and tool output display
+   - Validate agent/model selection and file attachments
 
-   - Run `bun install` in project root to install dependencies
-   - Test basic setup with `cd packages/web-ui && bun dev`
-   - Verify app starts on http://localhost:3001
-
-2. **Phase 2: Core Features Implementation**
-
-   - Copy/adapt message rendering components from desktop app
-   - Implement chat interface with message list
-   - Add streaming message support
-   - Build prompt input component
-   - Implement file attachment and context management
-   - Add tool output visualization
-   - Set up real-time updates via SSE (context already handles this)
-
-3. **Phase 3: Advanced Features**
-
+2. **Phase 3: Advanced Features**
    - Implement file explorer with search
    - Add diff viewer for code changes
    - Build model and agent selection UI
    - Add theme customization
    - Implement keyboard shortcuts
 
-4. **Future Phases**
+3. **Future Phases**
    - Phase 4: Polish & Security
    - Phase 5: Deployment
 

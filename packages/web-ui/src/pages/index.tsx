@@ -1,11 +1,251 @@
-export default function Home() {
+import { Button, Icon, Markdown, Typewriter, Collapsible } from "@opencode-ai/ui"
+import { For, onCleanup, onMount, createSignal, createEffect, createMemo, Show, Switch, Match } from "solid-js"
+import { useLocal } from "@/context/local"
+import { useSync } from "@/context/sync"
+import { useSDK } from "@/context/sdk"
+import { PromptInput, type ContentPart } from "@/components/prompt-input"
+import { MessageProgress } from "@/components/message-progress"
+import { getDirectory, getFilename } from "@/utils"
+import type { AssistantMessage as AssistantMessageType } from "@opencode-ai/sdk"
+
+export default function Page() {
+  const local = useLocal()
+  const sync = useSync()
+  const sdk = useSDK()
+  let inputRef!: HTMLDivElement
+  const [expanded, setExpanded] = createSignal(false)
+
+  createEffect(() => {
+    const userMessages = local.session.userMessages()
+    if (userMessages.length > 0 && !local.session.activeMessage()) {
+      local.session.setActiveMessage(userMessages[0].id)
+    }
+  })
+
+  onMount(() => {
+    document.addEventListener("keydown", handleKeyDown)
+  })
+
+  onCleanup(() => {
+    document.removeEventListener("keydown", handleKeyDown)
+  })
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const focused = document.activeElement === inputRef
+    if (focused) {
+      if (event.key === "Escape") {
+        inputRef?.blur()
+      }
+      return
+    }
+
+    if (event.key.length === 1 && event.key !== "Unidentified" && !(event.ctrlKey || event.metaKey)) {
+      inputRef?.focus()
+    }
+  }
+
+  const handlePromptSubmit = async (parts: ContentPart[]) => {
+    const existingSession = local.session.active()
+    let session = existingSession
+    if (!session) {
+      const created = await sdk.client.session.create()
+      session = created.data ?? undefined
+    }
+    if (!session) return
+
+    local.session.setActive(session.id)
+    const toAbsolutePath = (path: string) => (path.startsWith("/") ? path : sync.absolute(path))
+
+    const text = parts.map((part) => part.content).join("")
+    const attachments = parts.filter((part) => part.type === "file")
+
+    const attachmentParts = attachments.map((attachment) => {
+      const absolute = toAbsolutePath(attachment.path)
+      const query = attachment.selection
+        ? `?start=${attachment.selection.startLine}&end=${attachment.selection.endLine}`
+        : ""
+      return {
+        type: "file" as const,
+        mime: "text/plain",
+        url: `file://${absolute}${query}`,
+        filename: getFilename(attachment.path),
+        source: {
+          type: "file" as const,
+          text: {
+            value: attachment.content,
+            start: attachment.start,
+            end: attachment.end,
+          },
+          path: absolute,
+        },
+      }
+    })
+
+    await sdk.client.session.prompt({
+      path: { id: session.id },
+      body: {
+        agent: local.agent.current()!.name,
+        model: {
+          modelID: local.model.current()!.id,
+          providerID: local.model.current()!.provider.id,
+        },
+        parts: [
+          {
+            type: "text",
+            text,
+          },
+          ...attachmentParts,
+        ],
+      },
+    })
+  }
+
+  const handleNewSession = () => {
+    local.session.setActive(undefined)
+    inputRef?.focus()
+  }
+
   return (
-    <div class="flex h-screen w-screen items-center justify-center bg-neutral-1">
-      <div class="flex flex-col items-center gap-4">
-        <h1 class="text-20-semibold text-neutral-12">OpenCode Web UI</h1>
-        <p class="text-14-regular text-neutral-11">Web-based interface for OpenCode</p>
-        <p class="text-12-regular text-neutral-10">Under Construction</p>
-      </div>
+    <div class="relative h-screen flex flex-col bg-background-base">
+      <header class="h-12 shrink-0 bg-background-strong border-b border-border-weak-base flex items-center px-6">
+        <div class="flex items-center gap-4">
+          <Icon name="sparkles" size="small" />
+          <span class="text-14-medium text-text-strong">OpenCode Chat</span>
+        </div>
+      </header>
+      <main class="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <Show
+          when={local.session.active()}
+          fallback={
+            <div class="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+              <div class="text-center">
+                <h1 class="text-24-semibold text-text-strong mb-2">Start a new session</h1>
+                <p class="text-14-regular text-text-weak">
+                  {getDirectory(sync.data.path.directory)}
+                  <span class="text-text-strong">{getFilename(sync.data.path.directory)}</span>
+                </p>
+              </div>
+              <Button size="large" onClick={handleNewSession} icon="edit-small-2">
+                New Session
+              </Button>
+            </div>
+          }
+        >
+          {(activeSession) => (
+            <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+              <div class="flex-1 min-h-0 overflow-y-auto px-6 pt-8">
+                <div class="max-w-2xl mx-auto w-full flex flex-col gap-8 pb-32">
+                  <For each={local.session.userMessages()}>
+                    {(message) => {
+                      const isActive = createMemo(() => local.session.activeMessage()?.id === message.id)
+                      const [titled, setTitled] = createSignal(!!message.summary?.title)
+                      const [completed, setCompleted] = createSignal(!!message.summary?.body)
+                      const title = createMemo(() => message.summary?.title)
+                      const summary = createMemo(() => message.summary?.body)
+                      const assistantMessages = createMemo(() => {
+                        return sync.data.message[activeSession().id]?.filter(
+                          (m) => m.role === "assistant" && m.parentID == message.id,
+                        ) as AssistantMessageType[]
+                      })
+                      const hasToolPart = createMemo(() =>
+                        assistantMessages()
+                          ?.flatMap((m) => sync.data.part[m.id])
+                          .some((p) => p?.type === "tool"),
+                      )
+                      const working = createMemo(() => !summary())
+
+                      createEffect(() => {
+                        title()
+                        setTimeout(() => setTitled(!!title()), 10_000)
+                      })
+                      createEffect(() => {
+                        summary()
+                        setTimeout(() => setCompleted(!!summary()), 1200)
+                      })
+
+                      return (
+                        <Show when={isActive()}>
+                          <div class="flex flex-col gap-6">
+                            <div class="py-2 flex flex-col gap-2">
+                              <div class="w-full text-14-medium text-text-strong">
+                                <Show
+                                  when={titled()}
+                                  fallback={
+                                    <Typewriter
+                                      as="h2"
+                                      text={title() ?? ""}
+                                      class="overflow-hidden text-ellipsis min-w-0 text-nowrap"
+                                    />
+                                  }
+                                >
+                                  {(t) => <h2 class="overflow-hidden text-ellipsis min-w-0 text-nowrap">{t()}</h2>}
+                                </Show>
+                              </div>
+                            </div>
+
+                            <Show when={completed()}>
+                              <div class="w-full flex flex-col gap-4">
+                                <Show when={summary()}>
+                                  {(sum) => <Markdown classList={{ "[&>*]:fade-up-text": true }} text={sum()} />}
+                                </Show>
+
+                                <Show when={hasToolPart()}>
+                                  <Collapsible variant="ghost" open={expanded()} onOpenChange={setExpanded}>
+                                    <Collapsible.Trigger class="text-text-weak hover:text-text-strong">
+                                      <div class="flex items-center gap-1">
+                                        <div class="text-12-medium">
+                                          <Switch>
+                                            <Match when={expanded()}>Hide details</Match>
+                                            <Match when={!expanded()}>Show details</Match>
+                                          </Switch>
+                                        </div>
+                                        <Collapsible.Arrow />
+                                      </div>
+                                    </Collapsible.Trigger>
+                                    <Collapsible.Content>
+                                      <div class="w-full flex flex-col gap-3 pt-3">
+                                        <For each={assistantMessages()}>
+                                          {(msg) => {
+                                            const sum = (msg as any).summary
+                                            return (
+                                              <div class="text-12-regular text-text-weak p-3 bg-background-element rounded-lg">
+                                                {sum?.title ? (
+                                                  <div class="font-medium mb-2">{sum.title}</div>
+                                                ) : undefined}
+                                              </div>
+                                            )
+                                          }}
+                                        </For>
+                                      </div>
+                                    </Collapsible.Content>
+                                  </Collapsible>
+                                </Show>
+                              </div>
+                            </Show>
+
+                            <Show when={!completed()}>
+                              <MessageProgress assistantMessages={assistantMessages} done={!working()} />
+                            </Show>
+                          </div>
+                        </Show>
+                      )
+                    }}
+                  </For>
+                </div>
+              </div>
+            </div>
+          )}
+        </Show>
+
+        <div class="shrink-0 px-6 py-8 max-w-4xl mx-auto w-full">
+          <PromptInput
+            ref={(el) => {
+              inputRef = el
+            }}
+            onSubmit={handlePromptSubmit}
+          />
+        </div>
+      </main>
     </div>
   )
 }
