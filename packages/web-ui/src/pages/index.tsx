@@ -1,4 +1,4 @@
-import { Button, Icon, Markdown, Typewriter, Collapsible } from "@opencode-ai/ui"
+import { Button, Icon, Markdown, Typewriter, Collapsible, Message } from "@opencode-ai/ui"
 import { For, onCleanup, onMount, createSignal, createEffect, createMemo, Show, Switch, Match } from "solid-js"
 import { useLocal, type LocalFile } from "@/context/local"
 import { useSync } from "@/context/sync"
@@ -19,13 +19,6 @@ export default function Page() {
   const [expanded, setExpanded] = createSignal(false)
   const [sidebarOpen, setSidebarOpen] = createSignal(true)
   const [fileExplorerOpen, setFileExplorerOpen] = createSignal(false)
-
-  createEffect(() => {
-    const userMessages = local.session.userMessages()
-    if (userMessages.length > 0 && !local.session.activeMessage()) {
-      local.session.setActiveMessage(userMessages[0].id)
-    }
-  })
 
   onMount(() => {
     const handler = createShortcutHandler([
@@ -152,61 +145,78 @@ export default function Page() {
               </div>
             }
           >
-            {(activeSession) => (
-              <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-                <div class="flex-1 min-h-0 overflow-y-auto px-6 pt-8">
-                  <div class="max-w-2xl mx-auto w-full flex flex-col gap-8 pb-32">
-                    <For each={local.session.userMessages()}>
-                      {(message) => {
-                        const isActive = createMemo(() => local.session.activeMessage()?.id === message.id)
-                        const [titled, setTitled] = createSignal(!!message.summary?.title)
-                        const [completed, setCompleted] = createSignal(!!message.summary?.body)
-                        const title = createMemo(() => message.summary?.title)
-                        const summary = createMemo(() => message.summary?.body)
-                        const assistantMessages = createMemo(() => {
-                          return sync.data.message[activeSession().id]?.filter(
-                            (m) => m.role === "assistant" && m.parentID == message.id,
-                          ) as AssistantMessageType[]
-                        })
-                        const hasToolPart = createMemo(() =>
-                          assistantMessages()
-                            ?.flatMap((m) => sync.data.part[m.id])
-                            .some((p) => p?.type === "tool"),
-                        )
-                        const working = createMemo(() => !summary())
+            {(activeSession) => {
+              const userMessages = createMemo(() => local.session.userMessages())
+              return (
+                <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <div class="flex-1 min-h-0 overflow-y-auto px-6 pt-8">
+                    <div class="max-w-2xl mx-auto w-full flex flex-col gap-8 pb-32">
+                      <For each={userMessages()}>
+                        {(message, index) => {
+                          const [titled, setTitled] = createSignal(!!message.summary?.title)
+                          const [completed, setCompleted] = createSignal(!!message.summary?.body)
+                          const title = createMemo(() => message.summary?.title)
+                          const summary = createMemo(() => message.summary?.body)
+                          const userParts = createMemo(() => sync.data.part[message.id] || [])
+                          const userText = createMemo(() => {
+                            const textParts = userParts().filter((p) => p?.type === "text")
+                            return textParts.map((p) => p.text).join("\n")
+                          })
+                          const assistantMessages = createMemo(() => {
+                            return sync.data.message[activeSession().id]?.filter(
+                              (m) => m.role === "assistant" && m.parentID == message.id,
+                            ) as AssistantMessageType[]
+                          })
+                          const hasToolPart = createMemo(() =>
+                            assistantMessages()
+                              ?.flatMap((m) => sync.data.part[m.id])
+                              .some((p) => p?.type === "tool"),
+                          )
+                          const working = createMemo(() => !summary())
+                          const isLastMessage = createMemo(() => index() === userMessages().length - 1)
 
-                        createEffect(() => {
-                          title()
-                          setTimeout(() => setTitled(!!title()), 10_000)
-                        })
-                        createEffect(() => {
-                          summary()
-                          setTimeout(() => setCompleted(!!summary()), 1200)
-                        })
+                          createEffect(() => {
+                            title()
+                            setTimeout(() => setTitled(!!title()), 10_000)
+                          })
+                          createEffect(() => {
+                            summary()
+                            setTimeout(() => setCompleted(!!summary()), 1200)
+                          })
 
-                        return (
-                          <Show when={isActive()}>
+                          return (
                             <div class="flex flex-col gap-6">
-                              <div class="py-2 flex flex-col gap-2">
-                                <div class="w-full text-14-medium text-text-strong">
+                              <Show when={title() && title() !== "│"}>
+                                <div class="py-2 flex flex-col gap-2">
+                                  <div class="w-full text-14-medium text-text-strong">
+                                    <Show
+                                      when={titled()}
+                                      fallback={
+                                        <Typewriter
+                                          as="h2"
+                                          text={title() ?? ""}
+                                          class="overflow-hidden text-ellipsis min-w-0 text-nowrap"
+                                        />
+                                      }
+                                    >
+                                      {(t) => <h2 class="overflow-hidden text-ellipsis min-w-0 text-nowrap">{t()}</h2>}
+                                    </Show>
+                                  </div>
+                                </div>
+                              </Show>
+
+                              <Show when={completed() || userText()}>
+                                <div class="w-full flex flex-col gap-4">
                                   <Show
-                                    when={titled()}
+                                    when={summary()}
                                     fallback={
-                                      <Typewriter
-                                        as="h2"
-                                        text={title() ?? ""}
-                                        class="overflow-hidden text-ellipsis min-w-0 text-nowrap"
-                                      />
+                                      <Show when={userText()}>
+                                        {(text) => (
+                                          <Markdown classList={{ "[&>*]:fade-up-text": true }} text={text()} />
+                                        )}
+                                      </Show>
                                     }
                                   >
-                                    {(t) => <h2 class="overflow-hidden text-ellipsis min-w-0 text-nowrap">{t()}</h2>}
-                                  </Show>
-                                </div>
-                              </div>
-
-                              <Show when={completed()}>
-                                <div class="w-full flex flex-col gap-4">
-                                  <Show when={summary()}>
                                     {(sum) => <Markdown classList={{ "[&>*]:fade-up-text": true }} text={sum()} />}
                                   </Show>
 
@@ -226,15 +236,9 @@ export default function Page() {
                                       <Collapsible.Content>
                                         <div class="w-full flex flex-col gap-3 pt-3">
                                           <For each={assistantMessages()}>
-                                            {(msg) => {
-                                              const sum = (msg as any).summary
-                                              return (
-                                                <div class="text-12-regular text-text-weak p-3 bg-background-element rounded-lg">
-                                                  {sum?.title ? (
-                                                    <div class="font-medium mb-2">{sum.title}</div>
-                                                  ) : undefined}
-                                                </div>
-                                              )
+                                            {(assistantMessage) => {
+                                              const parts = createMemo(() => sync.data.part[assistantMessage.id])
+                                              return <Message message={assistantMessage} parts={parts()} />
                                             }}
                                           </For>
                                         </div>
@@ -244,18 +248,18 @@ export default function Page() {
                                 </div>
                               </Show>
 
-                              <Show when={!completed()}>
+                              <Show when={!completed() && !userText() && isLastMessage()}>
                                 <MessageProgress assistantMessages={assistantMessages} done={!working()} />
                               </Show>
                             </div>
-                          </Show>
-                        )
-                      }}
-                    </For>
+                          )
+                        }}
+                      </For>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            }}
           </Show>
 
           <div class="shrink-0 px-6 py-8 max-w-4xl mx-auto w-full">
