@@ -103,26 +103,38 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
 
 ## Deployment Options
 
-### Option A: Self-Hosted
+### Option A: Self-Hosted (Local Network)
 
-- User runs `opencode serve` on their machine
-- Web UI connects to localhost
-- Similar to current desktop app model
-- Best for development and personal use
+- User runs `opencode serve --host 0.0.0.0 --port 4096` on their machine
+- Web UI runs on `bun dev --host` to allow remote access
+- Accessible from any device on the local network
+- Configure web UI via `http://<server-ip>:3001/?url=http://<server-ip>:4096`
+- Best for development and personal use across multiple devices
 
-### Option B: Cloud-Hosted
+### Option B: Self-Hosted (Production)
+
+- Build web UI: `bun run build`
+- Serve static files via nginx/caddy
+- Run opencode server with `--host 0.0.0.0`
+- Configure CORS for web UI domain
+- Optional: Use reverse proxy for single domain
+- Optional: SSL/TLS with Let's Encrypt
+
+### Option C: Cloud-Hosted (Static UI)
 
 - Deploy web UI to static hosting (Vercel, Netlify, Cloudflare)
-- Users connect to their own opencode server instances
-- Server runs on user's infrastructure
-- Web UI is just a client
+- Users run `opencode serve --host 0.0.0.0` on their infrastructure
+- Configure server URL in web UI settings
+- Web UI is just a client connecting to user's server
+- Requires proper CORS configuration
 
-### Option C: Fully Managed
+### Option D: Fully Managed (Future)
 
 - Host both web UI and opencode server instances
 - Multi-tenant architecture with user isolation
 - Requires significant infrastructure and security work
 - Database for user management
+- Authentication and authorization required
 
 ## Implementation Plan
 
@@ -213,15 +225,107 @@ Based on the desktop app (`packages/desktop/src/pages/index.tsx`), implement:
    - Instant theme switching without page reload
    - Support for light/dark mode per theme
 
-### Phase 5: Polish & Security (Week 8)
+### Phase 5: Remote Access & Server Discovery (Week 8)
 
-1. Add authentication layer
+**Core Requirement**: Web UI must be accessible from any device on the network, not just localhost.
+
+#### 1. Server Connection Configuration UI
+
+**Problem**: Currently hardcoded to `http://127.0.0.1:4096`
+
+**Solution**: Create server connection settings UI
+
+- Settings panel/modal for server configuration
+- Input fields for:
+  - Server host (IP address or hostname)
+  - Server port (default: 4096)
+  - Protocol (http/https)
+- Save server URL to localStorage (key: "opencode-server-url")
+- "Test Connection" button to verify server availability
+- Show connection status indicator in header
+- Auto-reconnect on network change
+
+#### 2. Server Discovery (Optional Enhancement)
+
+**Options to explore**:
+
+- mDNS/Bonjour for local network discovery
+- Server broadcasts availability on local network
+- Web UI scans common ports (4096, 3000, 8080) on detected network
+- QR code generation from server for easy mobile connection
+
+#### 3. Environment Variable & URL Parameter Support
+
+**Already partially implemented via SDK context**:
+
+- `VITE_OPENCODE_SERVER_HOST` - Server hostname/IP
+- `VITE_OPENCODE_SERVER_PORT` - Server port
+- URL parameter: `?url=http://192.168.1.100:4096`
+
+**Enhancements needed**:
+
+- Make URL parameter override localStorage
+- Show current server in UI
+- Easy way to switch between saved servers
+- "Recent servers" list in localStorage
+
+#### 4. Server-Side Configuration
+
+**Update opencode serve command**:
+
+- Add `--host` flag to bind to specific interface
+  - Default: `127.0.0.1` (localhost only)
+  - Option: `0.0.0.0` (all interfaces, needed for remote access)
+  - Option: specific IP address
+- Add `--cors-origin` flag for allowed origins
+  - Default: `*` for development
+  - Production: specific domains/IPs
+- Document in server documentation
+
+#### 5. CORS Configuration
+
+**Server must support CORS for remote access**:
+
+- Allow requests from web UI origin
+- Support preflight OPTIONS requests
+- Proper headers for SSE connections from remote origins
+- Configurable allowed origins
+
+#### Implementation Priority
+
+**Phase 5a: Essential (Week 8.1)**
+
+1. ✅ Server host/port already configurable via env vars and URL params
+2. Create settings UI for server connection
+3. Update server to support `--host 0.0.0.0` flag
+4. Ensure CORS headers are properly set
+5. Connection status indicator
+6. localStorage persistence for server URL
+
+**Phase 5b: Polish (Week 8.2)**
+
+1. Test connection button
+2. Recent servers list
+3. Auto-reconnect on network change
+4. Better error messages for connection issues
+5. Loading states during connection
+
+**Phase 5c: Future Enhancement**
+
+1. Server discovery via mDNS
+2. QR code for mobile connection
+3. Network scanning for servers
+
+### Phase 6: Polish & Security (Week 9)
+
+1. Add authentication layer (optional for self-hosted)
 2. Implement security best practices
 3. Error handling and loading states
-4. Responsive design
+4. Responsive design improvements
 5. Performance optimization
+6. Accessibility improvements
 
-### Phase 6: Deployment (Week 9-10)
+### Phase 7: Deployment (Week 10)
 
 1. Production build optimization
 2. Docker containerization
@@ -396,7 +500,17 @@ Legend:
      - Agent/model selection
      - File attachments via @ mentions
 
-2. **Phase 5: Polish & Security**
+2. **Phase 5: Remote Access & Server Discovery**
+   - Server connection configuration UI
+   - Settings panel for host/port configuration
+   - Connection status indicator
+   - localStorage persistence for server URL
+   - Server-side `--host` flag support for binding to all interfaces
+   - CORS configuration for remote access
+   - Test connection functionality
+   - Recent servers list
+
+3. **Phase 6: Polish & Security**
    - Add authentication layer (optional for self-hosted)
    - Implement security best practices
    - Error handling and loading states
@@ -404,7 +518,7 @@ Legend:
    - Performance optimization
    - Accessibility improvements
 
-3. **Phase 6: Deployment**
+4. **Phase 7: Deployment**
    - Production build optimization
    - Docker containerization
    - Deployment documentation
