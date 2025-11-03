@@ -248,7 +248,7 @@ export default function Page() {
                                 </div>
                               </Show>
 
-                              <Show when={!completed() && !userText() && isLastMessage()}>
+                              <Show when={!completed() && !userText() && isLastMessage() && working()}>
                                 <MessageProgress assistantMessages={assistantMessages} done={!working()} />
                               </Show>
                             </div>

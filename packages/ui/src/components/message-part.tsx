@@ -210,6 +210,14 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
 ToolRegistry.register({
   name: "read",
   render(props) {
+    const cleanOutput = createMemo(() => {
+      if (!props.output) return ""
+      // Remove line numbers format: "00001| " from each line
+      return props.output
+        .split("\n")
+        .map((line) => line.replace(/^\d{5}\|\s?/, ""))
+        .join("\n")
+    })
     return (
       <BasicTool
         icon="glasses"
@@ -217,7 +225,11 @@ ToolRegistry.register({
           title: "Read",
           subtitle: props.input.filePath ? getFilename(props.input.filePath) : "",
         }}
-      />
+      >
+        <Show when={props.output}>
+          <pre data-component="tool-output">{cleanOutput()}</pre>
+        </Show>
+      </BasicTool>
     )
   },
 })
@@ -230,8 +242,8 @@ ToolRegistry.register({
         icon="bullet-list"
         trigger={{ title: "List", subtitle: getDirectory(props.input.path || "/") }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -250,8 +262,8 @@ ToolRegistry.register({
           args: props.input.pattern ? ["pattern=" + props.input.pattern] : [],
         }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -273,8 +285,8 @@ ToolRegistry.register({
           args,
         }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -298,8 +310,8 @@ ToolRegistry.register({
           ),
         }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -318,8 +330,8 @@ ToolRegistry.register({
           subtitle: props.input.description,
         }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -337,8 +349,8 @@ ToolRegistry.register({
           subtitle: "Ran " + props.input.command,
         }}
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
@@ -410,8 +422,8 @@ ToolRegistry.register({
           </div>
         }
       >
-        <Show when={false && props.output}>
-          <div data-component="tool-output">{props.output}</div>
+        <Show when={props.output}>
+          <pre data-component="tool-output">{props.output}</pre>
         </Show>
       </BasicTool>
     )
